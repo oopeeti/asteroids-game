@@ -19,7 +19,8 @@ class Player(CircleShape):
         return [a, b, c]
     
     def draw(self, screen):
-        pygame.draw.polygon(screen, "white", self.triangle(), 2)
+        color = "yellow" if self.invulnerable else "white"
+        pygame.draw.polygon(screen, color, self.triangle(), 2)
     
     def rotate(self, dt):
         self.rotation += PLAYER_TURN_SPEED * dt
@@ -28,8 +29,12 @@ class Player(CircleShape):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
         self.position += forward * PLAYER_SPEED * dt
         
-    def shoot(self, dt):
-        Bullet(self.position.x, self.position.y, self.rotation)
+    def shoot(self):
+        if self.cooldown > 0:
+            return
+        self.cooldown = PLAYER_SHOOT_COOLDOWN
+        shot = Bullet(self.position.x, self.position.y)
+        shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation) * BULLET_SPEED
         
     def update(self, dt):
         keys = pygame.key.get_pressed()
@@ -44,7 +49,7 @@ class Player(CircleShape):
             self.move(-dt)
         if keys[pygame.K_SPACE] or keys[pygame.MOUSEBUTTONDOWN]:
             if(self.cooldown <= 0):
-                self.shoot(dt)
+                self.shoot()
                 self.cooldown = PLAYER_SHOOT_COOLDOWN
                 
         self.cooldown -= dt

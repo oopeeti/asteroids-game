@@ -25,11 +25,15 @@ def main():
     
     Player.containers = (updatable, drawable)
     Asteroid.containers = (asteroids, updatable, drawable)
-    AsteroidField.containers = (updatable)
     Bullet.containers = (bullets, updatable, drawable)
+    AsteroidField.containers = ()
     
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-    asteroid_field = AsteroidField()
+    asteroid_field = AsteroidField() # !! Gets updated on its own
+    
+    # Invulnerability at beginning
+    player.invulnerable = True  
+    invulnerability_timer = PLAYER_INVULNERABILITY_TIME
     
     dt = 0
     
@@ -38,21 +42,30 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+                
+        # Update the player invulnerability timer
+        if player.invulnerable:
+            invulnerability_timer -= dt
+            if invulnerability_timer <= 0:
+                player.invulnerable = False
+                
+        asteroid_field.update(dt, player.position)
         
         for object in updatable:
-            object.update(dt) 
+            object.update(dt)
         
         for asteroid in asteroids:
-            if player.is_colliding(asteroid):
+            if not player.invulnerable and player.is_colliding(asteroid):
                 print("Game Over!")
                 pygame.quit()
                 quit()
+                
             for bullet in bullets:
-                if bullet.is_colliding(asteroid):
-                    asteroid.split()
+                if asteroid.is_colliding(bullet):
                     bullet.kill()
+                    asteroid.split()
                     score += 1
-            
+                    
         screen.fill("black")
         text = font.render(f"Current Score: {score}", True, "white")
         text_pos = text.get_rect(centerx=SCREEN_WIDTH // 2, centery=50)
